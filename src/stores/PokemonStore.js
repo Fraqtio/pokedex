@@ -1,38 +1,35 @@
 import { makeAutoObservable } from 'mobx';
-import {fetchPokemonDetails, fetchPokemonList, getPokemonCount} from '../api/pokemonAPI';
+import {fetchPokemonDetails, fetchPokemonList, getPokemonMaxCount} from '../api/pokemonAPI';
 import pokeball from "../assets/pokeball.jpg";
 
 class PokemonStore {
     pokemons = [];          // Обычный список покемонов (для стандартного отображения)
-    filteredPokemons = [];  // Временный список покемонов при поиске
     allPokemons = [];       // Полный список имен покемонов
     limit = 10;
     offset = 0;
     isLoading = false;
     error = null;
     pokemonCount = 0;
+    pokemonMaxCount = 0;
     searchQuery = "";
     isFullDataLoaded = false;
-    isSearching = false;
 
     constructor() {
         makeAutoObservable(this);
-        this.loadInitialData();
-        this.loadFullData();
     }
 
-    async loadInitialData() {
-        await this.loadPokemonCount();
-        await this.loadPokemons();
-    }
-
-    async loadPokemonCount() {
-        this.pokemonCount = await getPokemonCount();
+    async loadPokemonMaxCount() {
+        this.pokemonMaxCount = await getPokemonMaxCount();
+        this.pokemonCount = this.pokemonMaxCount;
     }
 
     async loadFullData() {
         try {
-            const data = await fetchPokemonList(this.pokemonCount, 0); // Загружаем всех покемонов
+            const payload = {
+                limit: this.pokemonMaxCount,
+                offset: 0
+            }
+            const data = await fetchPokemonList(payload); // Загружаем всех покемонов
             this.allPokemons = data; // Теперь это массив объектов { name, url }
             this.isFullDataLoaded = true;
         } catch (error) {
@@ -46,16 +43,20 @@ class PokemonStore {
             let pokemonList;
 
             if (this.isFullDataLoaded && this.searchQuery) {
-                const filtered = this.allPokemons
-                    .filter(p => p.name.includes(this.searchQuery))
-                    .slice(this.offset, this.offset + this.limit);
-
+                let filtered = this.allPokemons
+                    .filter(p => p.name.includes(this.searchQuery));
+                this.pokemonCount = filtered.length;
+                filtered = filtered.slice(this.offset, this.offset + this.limit);
                 pokemonList = await Promise.all(filtered.map(async (p) => {
                     const data = await fetchPokemonDetails(p.url);
                     return this.processPokemonData(data);
                 }));
             } else {
-                const data = await fetchPokemonList(this.limit, this.offset);
+                const payload = {
+                    limit: this.limit,
+                    offset: this.offset
+                }
+                const data = await fetchPokemonList(payload);
                 pokemonList = await Promise.all(data.map(async (p) => {
                     const pokemonData = await fetchPokemonDetails(p.url); // Ожидаем данные
                     return this.processPokemonData(pokemonData);

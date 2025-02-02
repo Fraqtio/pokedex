@@ -8,7 +8,14 @@ const PokemonList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
-        pokemonStore.loadPokemons();
+        const initialize = async () => {
+            await pokemonStore.loadPokemonMaxCount();
+            await pokemonStore.loadPokemons();
+            await pokemonStore.loadFullData();
+        }
+
+        initialize();
+
     }, []);
 
     const handleSearch = (event) => {
@@ -16,10 +23,6 @@ const PokemonList = observer(() => {
         pokemonStore.setSearchQuery(event.target.value.toLowerCase());
         pokemonStore.applySearch();
     };
-
-
-    if (pokemonStore.error) return <div>Ошибка: {pokemonStore.error}</div>;
-    if (pokemonStore.pokemons.length === 0) return <div>Покемоны не найдены.</div>;
 
     return (
         <div>
