@@ -1,6 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { fetchPokemonList, getPokemonCount } from '../api/pokemonAPI';
-import axios from 'axios';
+import {fetchPokemonDetails, fetchPokemonList, getPokemonCount} from '../api/pokemonAPI';
 import pokeball from "../assets/pokeball.jpg";
 
 class PokemonStore {
@@ -32,8 +31,13 @@ class PokemonStore {
     }
 
     async loadFullData() {
-        this.allPokemons = fetchPokemonList(this.loadPokemonCount(), this.offset);
-        this.isFullDataLoaded = true;
+        try {
+            const data = await fetchPokemonList(this.pokemonCount, 0); // Загружаем всех покемонов
+            this.allPokemons = data; // Теперь это массив объектов { name, url }
+            this.isFullDataLoaded = true;
+        } catch (error) {
+            console.error("Ошибка загрузки полного списка:", error);
+        }
     }
 
     async loadPokemons() {
@@ -42,19 +46,19 @@ class PokemonStore {
             let pokemonList;
 
             if (this.isFullDataLoaded && this.searchQuery) {
-                const filtered = this.allPokemons.filter(p =>
-                    p.name.includes(this.searchQuery)
-                ).slice(this.offset, this.offset + this.limit);
+                const filtered = this.allPokemons
+                    .filter(p => p.name.includes(this.searchQuery))
+                    .slice(this.offset, this.offset + this.limit);
 
                 pokemonList = await Promise.all(filtered.map(async (p) => {
-                    const response = await axios.get(p.url);
-                    return this.processPokemonData(response.data);
+                    const data = await fetchPokemonDetails(p.url);
+                    return this.processPokemonData(data);
                 }));
             } else {
                 const data = await fetchPokemonList(this.limit, this.offset);
                 pokemonList = await Promise.all(data.map(async (p) => {
-                    const response = await axios.get(p.url);
-                    return this.processPokemonData(response.data);
+                    const pokemonData = await fetchPokemonDetails(p.url); // Ожидаем данные
+                    return this.processPokemonData(pokemonData);
                 }));
             }
 
@@ -82,6 +86,10 @@ class PokemonStore {
     setSearchQuery(query) {
         this.searchQuery = query.toLowerCase();
         this.offset = 0;
+    }
+
+    setLimit(limit) {
+        this.limit = limit;
     }
 
     applySearch() {
