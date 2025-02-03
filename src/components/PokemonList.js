@@ -6,6 +6,20 @@ import Pagination from "../components/Pagination";
 
 const PokemonList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
+    const currentPage = Math.floor(pokemonStore.offset / pokemonStore.limit) + 1;
+    const totalPages = Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit);
+
+    const handlePageChange = (page) => {
+        const newOffset = (page - 1) * pokemonStore.limit;
+        pokemonStore.offset = newOffset;
+        pokemonStore.loadPokemons();
+    };
+
+    const handleLimitChange = (newLimit) => {
+        pokemonStore.setLimit(newLimit);
+        pokemonStore.offset = 0; // Сбрасываем на первую страницу
+        pokemonStore.loadPokemons();
+    };
 
     useEffect(() => {
         const initialize = async () => {
@@ -26,40 +40,51 @@ const PokemonList = observer(() => {
 
     return (
         <div>
-            {/* Поле для поиска */}
-            <input
-                type="text"
-                placeholder="Поиск покемона..."
-                value={searchTerm}
-                onChange={handleSearch}
-                style={{
-                    padding: "8px",
-                    marginBottom: "10px",
-                    width: "100%",
-                    maxWidth: "300px",
-                    display: "block",
-                }}
-            />
-            <div>
-                <button onClick={() => pokemonStore.prevPage()} disabled={pokemonStore.offset === 0}>Prev</button>
-                <button onClick={() => pokemonStore.nextPage()}>Next</button>
-                <button onClick={() => {pokemonStore.setLimit(10);pokemonStore.loadPokemons()}}>10</button>
-                <button onClick={() => {pokemonStore.setLimit(20);pokemonStore.loadPokemons()}}>20</button>
-                <button onClick={() => {pokemonStore.setLimit(50);pokemonStore.loadPokemons()}}>50</button>
-                <Pagination
-                    currentPage={pokemonStore.offset / pokemonStore.limit + 1}
-                    totalPages={Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit)}
-                    onPageChange={(page) => {
-                        pokemonStore.offset = (page - 1) * pokemonStore.limit;
-                        pokemonStore.loadPokemons();
+            {/* Контейнер для поиска и пагинации */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '20px',
+                marginBottom: '20px'
+            }}>
+                {/* Пагинация слева */}
+                <div style={{ flex: '1 1 auto', minWidth: '300px' }}>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPrev={() => pokemonStore.prevPage()}
+                        onNext={() => pokemonStore.nextPage()}
+                        onPageChange={handlePageChange}
+                        onLimitChange={handleLimitChange}
+                        isPrevDisabled={pokemonStore.offset === 0}
+                        isNextDisabled={pokemonStore.offset + pokemonStore.limit >= pokemonStore.pokemonCount}
+                        currentLimit={pokemonStore.limit}
+                    />
+                </div>
+
+                {/* Поле поиска справа */}
+                <input
+                    type="text"
+                    placeholder="Поиск покемона..."
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    style={{
+                        padding: "8px",
+                        width: "100%",
+                        maxWidth: "300px",
+                        flexShrink: 0
                     }}
                 />
             </div>
+
+            {/* Сетка покемонов */}
             <div style={{
                 display: "grid",
                 gap: "20px",
-                justifyContent: "center", // Центрирование сетки
-                gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", // Сделаем адаптивным
+                justifyContent: "center",
+                gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
             }}>
                 {pokemonStore.pokemons.map((pokemon) => (
                     <PokemonCard key={pokemon.name} {...pokemon} />
