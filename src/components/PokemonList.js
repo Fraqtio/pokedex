@@ -27,6 +27,7 @@ const PokemonList = observer(() => {
             await pokemonStore.loadPokemonMaxCount();
             await pokemonStore.loadPokemons();
             await pokemonStore.loadFullData();
+            await pokemonStore.loadAllPokemonsByType();
         }
 
         initialize();

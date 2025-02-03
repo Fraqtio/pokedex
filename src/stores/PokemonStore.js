@@ -1,11 +1,13 @@
 import { makeAutoObservable } from 'mobx';
-import {fetchPokemonDetails, fetchPokemonList, getPokemonMaxCount} from '../api/pokemonAPI';
+import {fetchPokemonDetails, fetchPokemonList, fetchPokemonListByType, getPokemonMaxCount} from '../api/pokemonAPI';
 import pokeball from "../assets/pokeball.jpg";
+import {allTypes} from "../constants/pokeTypes";
 
 class PokemonStore {
 
     pokemons = []; // Список загруженных покемонов для отображения
     allPokemons = []; // Полный список имен покемонов (используется для поиска)
+    pokemonByType = new Map(); // Полный список имен покемонов по типам (используется для поиска)
     limit = 10; // Количество покемонов на одной странице
     offset = 0;  // Текущий сдвиг (offset) для пагинации
     isLoading = false;  // Флаг загрузки данных
@@ -37,6 +39,22 @@ class PokemonStore {
             this.isFullDataLoaded = true;
         } catch (error) {
             console.error("Ошибка загрузки полного списка:", error);
+        }
+    }
+
+    async loadAllPokemonsByType() {
+        for (let i = 0; i < allTypes.length; i++) {
+            const typeName = allTypes[i];
+            try {
+                const data = await fetchPokemonListByType(i + 1); // Типы в PokeAPI индексируются с 1
+                const pokemonList = await Promise.all(data.map(async (p) => {
+                    const details = await fetchPokemonDetails(p.url);
+                    return this.processPokemonData(details);
+                }));
+                this.pokemonByType.set(typeName, pokemonList);
+            } catch (error) {
+                console.error(`Ошибка загрузки для типа ${typeName}:`, error);
+            }
         }
     }
 
@@ -128,4 +146,5 @@ class PokemonStore {
     }
 }
 
-export default new PokemonStore();
+const pokemonStoreInstance = new PokemonStore();
+export default pokemonStoreInstance;
