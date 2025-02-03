@@ -157,7 +157,8 @@ class PokemonStore {
                 hp: data.stats.find(s => s.stat.name === "hp")?.base_stat || 0,
                 defense: data.stats.find(s => s.stat.name === "defense")?.base_stat || 0,
                 speed: data.stats.find(s => s.stat.name === "speed")?.base_stat || 0,
-            }
+            },
+            abilities: data.abilities.map(a => a.ability.name)
         };
     }
 
