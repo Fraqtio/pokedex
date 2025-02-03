@@ -8,6 +8,7 @@ class PokemonStore {
     pokemons = []; // Список загруженных покемонов для отображения
     allPokemons = []; // Полный список имен покемонов (используется для поиска)
     pokemonByType = new Map(); // Полный список имен покемонов по типам (используется для поиска)
+    selectedType = null; // Выбранный тип покемона
     limit = 10; // Количество покемонов на одной странице
     offset = 0;  // Текущий сдвиг (offset) для пагинации
     isLoading = false;  // Флаг загрузки данных
@@ -43,15 +44,34 @@ class PokemonStore {
     }
 
     async loadAllPokemonsByType() {
+
         for (let i = 0; i < allTypes.length; i++) {
             const typeName = allTypes[i];
             try {
-                const data = await fetchPokemonListByType(i + 1); // Типы в PokeAPI индексируются с 1
-                const pokemonList = await Promise.all(data.map(async (p) => {
-                    const details = await fetchPokemonDetails(p.url);
-                    return this.processPokemonData(details);
-                }));
-                this.pokemonByType.set(typeName, pokemonList);
+                const responseData = await fetchPokemonListByType(i + 1);
+
+                // Добавим проверку структуры ответа
+                if (!Array.isArray(responseData)) {
+                    console.error(`Некорректный формат данных для типа ${typeName}:`, responseData);
+                    continue;
+                }
+
+                // Обрабатываем только нужные данные
+                const pokemonList = await Promise.all(
+                    responseData.map(async ({ pokemon }) => {
+                        try {
+                            const details = await fetchPokemonDetails(pokemon.url);
+                            return this.processPokemonData(details);
+                        } catch (error) {
+                            console.error(`Ошибка загрузки деталей для ${pokemon.name}:`, error);
+                            return null;
+                        }
+                    })
+                );
+
+                // Фильтруем возможные null-значения
+                this.pokemonByType.set(typeName, pokemonList.filter(p => p !== null));
+
             } catch (error) {
                 console.error(`Ошибка загрузки для типа ${typeName}:`, error);
             }
@@ -99,6 +119,15 @@ class PokemonStore {
         }
     }
 
+    loadPokemonsByType() {
+        console.log("Фильтрация по типу:", this.selectedType);
+        if (this.selectedType && this.pokemonByType.has(this.selectedType)) {
+            this.pokemons = this.pokemonByType.get(this.selectedType);
+            this.pokemonCount = this.pokemons.length; // Обновляем количество для пагинации
+        } else {
+            this.loadPokemons();
+        }
+    }
     // Обрабатывает данные о покемоне, извлекая нужные параметры
     processPokemonData(data) {
         return {
@@ -122,6 +151,12 @@ class PokemonStore {
     // Устанавливает лимит покемонов на странице
     setLimit(limit) {
         this.limit = limit;
+    }
+
+    setSelectedType(type) {
+        console.log("Выбран тип:", type);
+        this.selectedType = type;
+        this.loadPokemonsByType();
     }
 
     // Применяет поиск, загружая покемонов по строке поиска

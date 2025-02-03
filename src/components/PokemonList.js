@@ -4,6 +4,7 @@ import pokemonStore from "../stores/PokemonStore";
 import PokemonCard from "./PokemonCard";
 import Pagination from "../components/Pagination";
 import { debounce } from 'lodash';
+import {allTypes} from "../constants/pokeTypes";
 
 const PokemonList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -74,7 +75,7 @@ const PokemonList = observer(() => {
                 {/* Поле поиска справа */}
                 <input
                     type="text"
-                    placeholder="Поиск покемона..."
+                    placeholder="Pokemon search..."
                     value={searchTerm}
                     onChange={handleSearch}
                     style={{
@@ -84,6 +85,40 @@ const PokemonList = observer(() => {
                         flexShrink: 0
                     }}
                 />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                {allTypes.map((type) => (
+                    <button
+                        key={type}
+                        onClick={() => pokemonStore.setSelectedType(type)}
+                        style={{
+                            padding: "8px 12px",
+                            border: "1px solid #ddd",
+                            backgroundColor: pokemonStore.selectedType === type ? "#007bff" : "#fff",
+                            color: pokemonStore.selectedType === type ? "#fff" : "#000",
+                            cursor: "pointer",
+                            borderRadius: "5px",
+                            textTransform: "capitalize"
+                        }}
+                    >
+                        {type}
+                    </button>
+                ))}
+                {/* Кнопка для сброса фильтра */}
+                <button
+                    onClick={() => pokemonStore.setSelectedType(null)}
+                    style={{
+                        padding: "8px 12px",
+                        border: "1px solid #ddd",
+                        backgroundColor: pokemonStore.selectedType === null ? "#007bff" : "#fff",
+                        color: pokemonStore.selectedType === null ? "#fff" : "#000",
+                        cursor: "pointer",
+                        borderRadius: "5px"
+                    }}
+                >
+                    All
+                </button>
             </div>
 
             {/* Сетка покемонов */}
