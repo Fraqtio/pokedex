@@ -1,8 +1,7 @@
 export const allTypes = [
-    'normal', 'flying', 'water', 'fire', 'grass',
-    'poison', 'bug', 'electric', 'ground', 'fairy',
-    'fighting', 'psychic', 'rock', 'steel', 'ice',
-    'ghost', 'dragon', 'dark', 'stellar'
+    'normal', 'fighting', 'flying', 'poison', 'ground', 'rock',
+    'bug', 'ghost', 'steel', 'fire', 'water', 'grass', 'electric',
+    'psychic', 'ice', 'dragon', 'dark', 'fairy','stellar'
 ];
 
 export const typeColors = {

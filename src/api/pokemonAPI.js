@@ -14,8 +14,7 @@ export const fetchPokemonList = async ({limit = 10, offset = 0}) => {
 export const fetchPokemonListByType = async (typeNumber) => {
     try {
         const response = await axios.get(`${POKE_API_URL}type/${typeNumber}`);
-        console.log("Ответ API для типа:", typeNumber, response.data);
-        return response.data.pokemon || [];
+        return response.data.pokemon;
     } catch (error) {
         console.error("Ошибка загрузки покемонов по типу:", error);
         return [];

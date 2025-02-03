@@ -4,7 +4,7 @@ import pokemonStore from "../stores/PokemonStore";
 import PokemonCard from "./PokemonCard";
 import Pagination from "../components/Pagination";
 import { debounce } from 'lodash';
-import {allTypes} from "../constants/pokeTypes";
+import {allTypes, typeColors} from "../constants/pokeTypes";
 
 const PokemonList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -14,30 +14,28 @@ const PokemonList = observer(() => {
     const handlePageChange = (page) => {
         const newOffset = (page - 1) * pokemonStore.limit;
         pokemonStore.offset = newOffset;
-        pokemonStore.loadPokemons();
+        pokemonStore.fetchPokemonList();
     };
 
     const handleLimitChange = (newLimit) => {
         pokemonStore.setLimit(newLimit);
         pokemonStore.offset = 0; // Сбрасываем на первую страницу
-        pokemonStore.loadPokemons();
+        pokemonStore.fetchPokemonList();
     };
 
     useEffect(() => {
         const initialize = async () => {
-            await pokemonStore.loadPokemonMaxCount();
-            await pokemonStore.loadPokemons();
-            await pokemonStore.loadFullData();
-            await pokemonStore.loadAllPokemonsByType();
+            await pokemonStore.fetchTotalPokemonCount();
+            await pokemonStore.fetchPokemonList();
+            await pokemonStore.fetchAllPokemonData();
+            await pokemonStore.fetchPokemonByType();
         }
-
         initialize();
-
     }, []);
 
     const debouncedSearch = debounce((query) => {
-        pokemonStore.setSearchQuery(query);
-        pokemonStore.applySearch();
+        pokemonStore.updateSearchQuery(query);
+        pokemonStore.searchPokemons();
     }, 300);
 
     const handleSearch = (event) => {
@@ -62,8 +60,8 @@ const PokemonList = observer(() => {
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        onPrev={() => pokemonStore.prevPage()}
-                        onNext={() => pokemonStore.nextPage()}
+                        onPrev={() => pokemonStore.goToPrevPage()}
+                        onNext={() => pokemonStore.goToNextPage()}
                         onPageChange={handlePageChange}
                         onLimitChange={handleLimitChange}
                         isPrevDisabled={pokemonStore.offset === 0}
@@ -86,20 +84,27 @@ const PokemonList = observer(() => {
                     }}
                 />
             </div>
-
+            {/* Поле выбора типа для поиска */}
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
                 {allTypes.map((type) => (
                     <button
                         key={type}
-                        onClick={() => pokemonStore.setSelectedType(type)}
+                        onClick={() => pokemonStore.togglePokemonTypeFilter(type)}
                         style={{
                             padding: "8px 12px",
-                            border: "1px solid #ddd",
-                            backgroundColor: pokemonStore.selectedType === type ? "#007bff" : "#fff",
-                            color: pokemonStore.selectedType === type ? "#fff" : "#000",
+                            border: `2px solid ${typeColors[type]}`, // Используем цвет типа для границы
+                            backgroundColor: pokemonStore.selectedTypes.includes(type)
+                                ? typeColors[type] // Если тип выбран - цвет типа
+                                : "transparent", // Если не выбран - прозрачный фон
+                            color: pokemonStore.selectedTypes.includes(type)
+                                ? "#fff" // Белый текст для выбранных типов
+                                : typeColors[type], // Цвет типа для невыбранных
                             cursor: "pointer",
-                            borderRadius: "5px",
-                            textTransform: "capitalize"
+                            borderRadius: "20px",
+                            textTransform: "capitalize",
+                            transition: "all 0.2s ease",
+                            fontWeight: pokemonStore.selectedTypes.includes(type) ? "bold" : "normal",
+                            position: "relative"
                         }}
                     >
                         {type}
@@ -107,12 +112,12 @@ const PokemonList = observer(() => {
                 ))}
                 {/* Кнопка для сброса фильтра */}
                 <button
-                    onClick={() => pokemonStore.setSelectedType(null)}
+                    onClick={() => pokemonStore.togglePokemonTypeFilter(null)}
                     style={{
                         padding: "8px 12px",
                         border: "1px solid #ddd",
-                        backgroundColor: pokemonStore.selectedType === null ? "#007bff" : "#fff",
-                        color: pokemonStore.selectedType === null ? "#fff" : "#000",
+                        backgroundColor: pokemonStore.selectedTypes === null ? "#007bff" : "#fff",
+                        color: pokemonStore.selectedTypes === null ? "#fff" : "#000",
                         cursor: "pointer",
                         borderRadius: "5px"
                     }}
