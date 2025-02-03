@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import pokemonStore from "../stores/PokemonStore";
 import PokemonCard from "./PokemonCard";
 import Pagination from "../components/Pagination";
+import { debounce } from 'lodash';
 
 const PokemonList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
     const currentPage = Math.floor(pokemonStore.offset / pokemonStore.limit) + 1;
-    const totalPages = Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit);
+    const totalPages = Math.max(1, Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit));
 
     const handlePageChange = (page) => {
         const newOffset = (page - 1) * pokemonStore.limit;
@@ -32,10 +33,15 @@ const PokemonList = observer(() => {
 
     }, []);
 
-    const handleSearch = (event) => {
-        setSearchTerm(event.target.value.toLowerCase());
-        pokemonStore.setSearchQuery(event.target.value.toLowerCase());
+    const debouncedSearch = debounce((query) => {
+        pokemonStore.setSearchQuery(query);
         pokemonStore.applySearch();
+    }, 300);
+
+    const handleSearch = (event) => {
+        const query = event.target.value.toLowerCase();
+        setSearchTerm(query);
+        debouncedSearch(query);
     };
 
     return (
