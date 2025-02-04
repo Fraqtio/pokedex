@@ -36,7 +36,7 @@ const PokemonList = observer(() => {
     const debouncedSearch = debounce((query) => {
         pokemonStore.updateSearchQuery(query);
         pokemonStore.searchPokemons();
-    }, 300);
+    }, 100);
 
     const handleSearch = (event) => {
         const query = event.target.value.toLowerCase();

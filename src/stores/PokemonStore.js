@@ -89,27 +89,37 @@ class PokemonStore {
                 }
 
                 if (this.selectedTypes.length > 0) {
-                    // Получаем массивы покемонов для каждого выбранного типа
+                    // 1. Фильтрация по полному совпадению типов
                     const typePokemons = this.selectedTypes.map(type =>
                         this.pokemonByType.get(type) || []
                     );
 
-                    // Находим пересечение всех массивов
-                    filtered = typePokemons.reduce((acc, curr) =>
+                    // Полное совпадение (покемоны с ВСЕМИ выбранными типами)
+                    const fullMatch = typePokemons.reduce((acc, curr) =>
                             acc.filter(p => curr.some(cp => cp.name === p.name)),
                         typePokemons[0] || []
                     );
 
-                    // Оставляем только базовую информацию для последующей загрузки
-                    filtered = filtered.map(p => ({name: p.name, url: p.url}));
+                    // 2. Фильтрация по частичному совпадению (хотя бы один тип)
+                    const partialMatch = this.selectedTypes
+                        .flatMap(type => this.pokemonByType.get(type) || [])
+                        .filter(p => !fullMatch.some(fm => fm.name === p.name)); // Исключаем дубли
+
+                    // 3. Объединяем результаты (сначала полное совпадение, затем частичное)
+                    const combinedResults = [...fullMatch, ...partialMatch];
+
+                    // 4. Оставляем только те, что уже есть в `filtered`, сохраняя порядок
+                    filtered = combinedResults.filter(p =>
+                        filtered.some(fp => fp.name === p.name)
+                    );
                 }
 
+                // Применяем пагинацию и загружаем детали
                 runInAction(() => {
-                    this.pokemonCount = filtered.length; // <-- оборачиваем изменение в runInAction
+                    this.pokemonCount = filtered.length;
                 });
 
-                filtered = filtered.slice(this.offset, this.offset + this.limit); // Применяем пагинацию
-
+                filtered = filtered.slice(this.offset, this.offset + this.limit);
                 pokemonList = await Promise.all(filtered.map(async (p) => {
                     const data = await fetchPokemonDetails(p.url);
                     return this.mapPokemonDetails(data);
