@@ -2,7 +2,7 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useState } from 'react';
 import pokemonStore from "../stores/PokemonStore";
 import PokemonCard from "./PokemonCard";
-import Pagination from "../components/Pagination";
+import Pagination from "./Pagination";
 import { debounce } from 'lodash';
 import {allTypes, typeColors} from "../constants/pokeTypes";
 
