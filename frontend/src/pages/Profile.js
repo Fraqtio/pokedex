@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {useLocation, useNavigate} from "react-router-dom";
 import FavoriteList from "../components/FavoriteList";
+import pokemonStore from "../stores/PokemonStore";
 
 const Profile = () => {
     const [user, setUser] = useState(null);
@@ -18,13 +19,8 @@ const Profile = () => {
                 const response = await axios.get("http://localhost:5000/user", {
                     headers: {Authorization: `Bearer ${storedToken}`},
                 });
-
-                const userData = {
-                    ...response.data,
-                    favorites: response.data
-                };
-
-                setUser(userData);
+                await pokemonStore.fetchUserFavorites();
+                setUser(response.data);
 
             } catch (err) {
                 console.error("Ошибка загрузки данных:", err);
@@ -36,6 +32,11 @@ const Profile = () => {
     fetchUser();
 
     }, [location.search, navigate]);
+
+    useEffect(() => {
+        // Загружаем избранных покемонов при каждом обновлении страницы
+        pokemonStore.fetchUserFavorites();
+    }, []);
 
     if (!user) {
         return <div>Загрузка...</div>;

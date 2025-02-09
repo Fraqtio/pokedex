@@ -88,9 +88,8 @@ class PokemonStore {
 
             const data = await response.json();
             runInAction(() => {
-                this.favorites = new Set(data);
-                // this.favorites.clear();  // Очищаем старое содержимое
-                // data.forEach(pokemon => this.favorites.add(pokemon));  // Добавляем новые элементы
+                this.favorites.clear();  // Очищаем старое содержимое
+                data.forEach(pokemon => this.favorites.add(pokemon));  // Добавляем новые элементы
             });
         } catch (error) {
             console.error("Ошибка загрузки избранных покемонов:", error);
@@ -127,47 +126,40 @@ class PokemonStore {
 
     // Загружает покемонов с учетом пагинации и поиска
     async fetchPokemonList() {
-        this.isLoading = true;
+        runInAction(() => { this.isLoading = true; });
+
         try {
             let pokemonList;
 
             if ((this.isFullDataLoaded && this.searchQuery) || (this.selectedTypes.length > 0)) {
-                let filtered = this.allPokemons;
+                let filtered = Array.isArray(this.allPokemons) ? this.allPokemons : [];
 
                 if (this.isFullDataLoaded && this.searchQuery) {
                     filtered = filtered.filter(p => p.name.includes(this.searchQuery));
                 }
 
                 if (this.selectedTypes.length > 0) {
-                    // 1. Фильтрация по полному совпадению типов
                     const typePokemons = this.selectedTypes.map(type =>
                         this.pokemonByType.get(type) || []
                     );
 
-                    // Полное совпадение (покемоны с ВСЕМИ выбранными типами)
                     const fullMatch = typePokemons.reduce((acc, curr) =>
                             acc.filter(p => curr.some(cp => cp.name === p.name)),
                         typePokemons[0] || []
                     );
 
-                    // 2. Фильтрация по частичному совпадению (хотя бы один тип)
                     const partialMatch = this.selectedTypes
                         .flatMap(type => this.pokemonByType.get(type) || [])
-                        .filter(p => !fullMatch.some(fm => fm.name === p.name)); // Исключаем дубли
+                        .filter(p => !fullMatch.some(fm => fm.name === p.name));
 
-                    // 3. Объединяем результаты (сначала полное совпадение, затем частичное)
                     const combinedResults = [...fullMatch, ...partialMatch];
 
-                    // 4. Оставляем только те, что уже есть в `filtered`, сохраняя порядок
                     filtered = combinedResults.filter(p =>
                         filtered.some(fp => fp.name === p.name)
                     );
                 }
 
-                // Применяем пагинацию и загружаем детали
-                runInAction(() => {
-                    this.pokemonCount = filtered.length;
-                });
+                runInAction(() => { this.pokemonCount = filtered.length; });
 
                 filtered = filtered.slice(this.offset, this.offset + this.limit);
                 pokemonList = await Promise.all(filtered.map(async (p) => {
@@ -176,14 +168,9 @@ class PokemonStore {
                 }));
 
             } else {
-                runInAction(() => {
-                    this.pokemonCount = this.pokemonMaxCount; // <-- тоже оборачиваем
-                });
+                runInAction(() => { this.pokemonCount = this.pokemonMaxCount; });
 
-                const payload = {
-                    limit: this.limit,
-                    offset: this.offset
-                };
+                const payload = { limit: this.limit, offset: this.offset };
                 const data = await fetchPokemonList(payload);
 
                 pokemonList = await Promise.all(data.map(async (p) => {
@@ -191,6 +178,69 @@ class PokemonStore {
                     return this.mapPokemonDetails(pokemonData);
                 }));
             }
+
+            runInAction(() => {
+                this.pokemons = pokemonList;
+                this.isLoading = false;
+            });
+
+        } catch (err) {
+            runInAction(() => {
+                this.error = err.message;
+                this.isLoading = false;
+            });
+        }
+    }
+
+    async fetchFavoritePokemons() {
+        runInAction(() => { this.isLoading = true; });
+        try {
+            // 1️⃣ Получаем объекты покемонов из `allPokemons`, используя `this.favorites`
+            let filteredFavorites = this.allPokemons.filter(pokemon =>
+                this.favorites.has(pokemon.name)
+            );
+
+            // 2️⃣ Фильтрация по поиску
+            if (this.isFullDataLoaded && this.searchQuery) {
+                filteredFavorites = filteredFavorites.filter(pokemon =>
+                    pokemon.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+                );
+            }
+
+            // 3️⃣ Фильтрация по типам (если выбраны)
+            if (this.selectedTypes.length > 0) {
+                const typePokemons = this.selectedTypes.map(type =>
+                    this.pokemonByType.get(type) || []
+                );
+
+                const fullMatch = typePokemons.reduce((acc, curr) =>
+                        acc.filter(p => curr.some(cp => cp.name === p.name)),
+                    typePokemons[0] || []
+                );
+
+                const partialMatch = this.selectedTypes
+                    .flatMap(type => this.pokemonByType.get(type) || [])
+                    .filter(p => !fullMatch.some(fm => fm.name === p.name));
+
+                const combinedResults = [...fullMatch, ...partialMatch];
+
+                filteredFavorites = combinedResults.filter(pokemon =>
+                    filteredFavorites.some(fav => fav.name === pokemon.name)
+                );
+            }
+
+            // 4️⃣ Применяем пагинацию
+            runInAction(() => {
+                this.pokemonCount = filteredFavorites.length;
+            });
+
+            const paginatedFavorites = filteredFavorites.slice(this.offset, this.offset + this.limit);
+
+            // 5️⃣ Загружаем детали покемонов
+            const pokemonList = await Promise.all(paginatedFavorites.map(async (pokemon) => {
+                const data = await fetchPokemonDetails(pokemon.url);
+                return this.mapPokemonDetails(data);
+            }));
 
             runInAction(() => {
                 this.pokemons = pokemonList;
@@ -228,6 +278,15 @@ class PokemonStore {
             this.searchQuery = query.toLowerCase();
             this.offset = 0;
         });
+        this.fetchPokemonList(); // Добавляем вызов
+    }
+
+    updateSearchQueryProfile(query) {
+        runInAction(() => {
+            this.searchQuery = query.toLowerCase(); // Обновляем поисковый запрос
+            this.offset = 0; // Сбрасываем пагинацию
+        });
+        this.fetchUserFavorites(); // Вызываем загрузку избранных покемонов с новым поисковым запросом
     }
 
     // Устанавливает лимит покемонов на странице
@@ -256,6 +315,27 @@ class PokemonStore {
             this.selectedTypes = [this.selectedTypes[1], type];
         }
         this.fetchPokemonList();
+    }
+
+    toggleFavoriteTypeFilter(type) {
+        // Очищаем при выборе кнопки "All"
+        if (type === null) {
+            this.selectedTypes = [];
+        }
+        // Если тип уже выбран - удаляем его
+        else if (this.selectedTypes.includes(type)) {
+            this.selectedTypes = this.selectedTypes.filter(t => t !== type);
+        }
+        // Если не выбран и меньше 2 выбранных - добавляем
+        else if (this.selectedTypes.length < 2) {
+            this.selectedTypes = [...this.selectedTypes, type];
+        }
+        // Если уже выбрано 2 типа - заменяем первый
+        else {
+            this.selectedTypes = [this.selectedTypes[1], type];
+        }
+
+        this.fetchUserFavorites(); // Загружаем избранных покемонов с новым фильтром
     }
 
     // Переход на следующую страницу
