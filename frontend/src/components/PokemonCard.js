@@ -1,14 +1,25 @@
 import React, { useState } from "react";
 import { getTypeColor } from "../constants/pokeTypes";
+import FavoriteButton from "./FavoriteButton";
 
-const PokemonCard = ({ name, image, types, stats, abilities }) => {
-    const [isHovered, setIsHovered] = useState(false); // Состояние для отслеживания наведения
+const PokemonCard = ({ name, image, types, stats, abilities, isFavorite }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const isLogged = !!localStorage.getItem("token");
+
     return (
         <div
             style={styles.card}
-            onMouseEnter={() => setIsHovered(true)} // Устанавливаем isHovered в true при наведении
-            onMouseLeave={() => setIsHovered(false)} // Устанавливаем isHovered в false при уходе курсора
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
+            {/* Кнопка избранного */}
+            {isLogged ?
+                (<FavoriteButton
+                pokemonName={name}
+                initialIsFavorite={isFavorite}
+            />) :  <></>
+            }
+
             <img src={image} alt={name} style={styles.image} />
             <h3 style={styles.name}>{name}</h3>
             <div style={styles.typesContainer}>
@@ -19,7 +30,6 @@ const PokemonCard = ({ name, image, types, stats, abilities }) => {
                 ))}
             </div>
             <div style={styles.stats}>
-                {/* Условный рендеринг: отображаем способности или характеристики */}
                 {isHovered ? (
                     <div>
                         <p style={styles.abilityTitle}>Abilities:</p>
@@ -50,8 +60,9 @@ const styles = {
         textAlign: "center",
         backgroundColor: "#f8f8f8",
         boxShadow: "3px 3px 10px rgba(0,0,0,0.1)",
-        transition: "transform 0.2s ease, box-shadow 0.2s ease", // Анимация при наведении
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
         cursor: "pointer",
+        position: "relative",
     },
     image: {
         width: "100px",

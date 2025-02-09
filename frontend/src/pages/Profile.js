@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {useLocation, useNavigate} from "react-router-dom";
+import FavoriteList from "../components/FavoriteList";
 
 const Profile = () => {
     const [user, setUser] = useState(null);
@@ -20,9 +21,9 @@ const Profile = () => {
 
                 const userData = {
                     ...response.data,
-                    favorites: response.data.favorites || [] // Если favorites нет - используем пустой массив
+                    favorites: response.data
                 };
-                console.log(userData);
+
                 setUser(userData);
 
             } catch (err) {
@@ -43,14 +44,10 @@ const Profile = () => {
     return (
         <div>
             <h1>Профиль</h1>
-            <p>Имя: {user.displayName}</p>
+            <p>Имя: {user.name}</p>
             <p>Email: {user.email}</p>
             <h2>Избранные покемоны</h2>
-            <ul>
-                {user.favorites.map((pokemon) => (
-                    <li key={pokemon._id}>{pokemon.name}</li>
-                ))}
-            </ul>
+            <FavoriteList />
         </div>
     );
 };

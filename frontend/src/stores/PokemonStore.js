@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import {makeAutoObservable, runInAction} from 'mobx';
 import {fetchPokemonDetails, fetchPokemonList, fetchPokemonListByType, getPokemonMaxCount} from '../api/pokemonAPI';
 import pokeball from "../assets/pokeball.jpg";
 import {allTypes} from "../constants/pokeTypes";
@@ -17,6 +17,7 @@ class PokemonStore {
     pokemonMaxCount = 0;  // Максимальное количество покемонов, доступных в API
     searchQuery = "";  // Строка поиска
     isFullDataLoaded = false;   // Флаг, указывающий, загружены ли все покемоны (для поиска)
+    favorites = new Set();
 
     constructor() {
         makeAutoObservable(this);
@@ -72,6 +73,55 @@ class PokemonStore {
             } catch (error) {
                 console.error(`Ошибка загрузки для типа ${typeName}:`, error);
             }
+        }
+    }
+
+    async fetchUserFavorites() {
+        try {
+            const response = await fetch('http://localhost:5000/favorites', {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            runInAction(() => {
+                this.favorites = new Set(data);
+                // this.favorites.clear();  // Очищаем старое содержимое
+                // data.forEach(pokemon => this.favorites.add(pokemon));  // Добавляем новые элементы
+            });
+        } catch (error) {
+            console.error("Ошибка загрузки избранных покемонов:", error);
+        }
+    }
+
+    async toggleFavorite(pokemonName) {
+        const method = this.favorites.has(pokemonName) ? "DELETE" : "POST";
+
+        try {
+            const response = await fetch(`http://localhost:5000/favorites/${pokemonName}`, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            if (response.ok) {
+                runInAction(() => { // Оборачиваем изменение состояния в runInAction
+                    if (this.favorites.has(pokemonName)) {
+                        this.favorites.delete(pokemonName);
+                    } else {
+                        this.favorites.add(pokemonName);
+                    }
+                });
+            } else {
+                console.error("Ошибка при изменении избранного");
+            }
+        } catch (error) {
+            console.error("Ошибка сети:", error);
         }
     }
 
@@ -174,13 +224,18 @@ class PokemonStore {
 
     // Устанавливает строку поиска и сбрасывает offset
     updateSearchQuery(query) {
-        this.searchQuery = query.toLowerCase();
-        this.offset = 0;
+        runInAction(() => {
+            this.searchQuery = query.toLowerCase();
+            this.offset = 0;
+        });
     }
 
     // Устанавливает лимит покемонов на странице
-    setLimit(limit) {
-        this.limit = limit;
+    setLimit(newLimit) {
+        runInAction(() => {
+            this.limit = newLimit;
+            this.offset = 0;  // если меняется лимит, сбрасываем offset
+        });
     }
 
     togglePokemonTypeFilter(type) {
@@ -203,25 +258,21 @@ class PokemonStore {
         this.fetchPokemonList();
     }
 
-    // Применяет поиск, загружая покемонов по строке поиска
-    searchPokemons() {
-        if (this.isFullDataLoaded) {
-            this.fetchPokemonList();
-        } else {
-            alert("Полный список еще загружается. Попробуйте позже.");
-        }
-    }
-
     // Переход на следующую страницу
     goToNextPage() {
-        this.offset += this.limit;
-        this.fetchPokemonList();
+        runInAction(() => {
+            this.offset += this.limit;
+            this.fetchPokemonList();
+        });
+
     }
 
-    // Переход на предыдущую страницу
     goToPrevPage() {
-        this.offset = Math.max(0, this.offset - this.limit);
-        this.fetchPokemonList();
+        runInAction(() => {
+            this.offset = Math.max(0, this.offset - this.limit);
+            this.fetchPokemonList();
+        });
+
     }
 }
 

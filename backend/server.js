@@ -9,6 +9,7 @@ const cors = require('cors')
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const favoritesRouter = require("./routes/favorites");
 
 const app = express();
 app.use(cors({
@@ -25,6 +26,7 @@ connectDB();
 
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
+app.use("/favorites", favoritesRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Сервер запущен на ${PORT}`));

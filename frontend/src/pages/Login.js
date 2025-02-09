@@ -1,35 +1,28 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import pokemonStore from "../stores/PokemonStore";
+import {runInAction} from "mobx";
 
 const Login = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
     useEffect(() => {
-        const queryParams = new URLSearchParams(location.search);
-        const token = queryParams.get("token");
+        const handleLogin = async () => {
+            const queryParams = new URLSearchParams(location.search);
+            const token = queryParams.get("token");
 
-        // Если токен есть в URL
-        if (token) {
-            // Сохраняем токен
-            localStorage.setItem("token", token);
-
-            // Очищаем URL от токена
-            navigate("/profile", { replace: true });
-        }
-        // Если токена нет в URL
-        else {
-            // Проверяем наличие токена в localStorage
-            const storedToken = localStorage.getItem("token");
-
-            if (storedToken) {
-                // Если токен есть - перенаправляем в профиль
-                navigate("/profile");
+            if (token) {
+                localStorage.setItem("token", token);
+                await pokemonStore.fetchUserFavorites(); // Дождаться загрузки избранных покемонов
+                navigate("/profile", { replace: true });
             } else {
-                // Если токена нет - перенаправляем на главную
-                navigate("/");
+                const storedToken = localStorage.getItem("token");
+                navigate(storedToken ? "/profile" : "/");
             }
-        }
+        };
+
+        handleLogin();
     }, [location.search, navigate]);
 
     return null; // Можно вернуть loader вместо null

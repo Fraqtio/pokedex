@@ -1,11 +1,28 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import { Link } from "react-router-dom";
+import LogoutButton from "./LogoutButton";
+import GoogleLoginButton from "./GoogleLoginButton";
 
 const Navbar = () => {
+
+    const [token, setToken] = useState(localStorage.getItem("token"));
+
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const tokenFromStorage = localStorage.getItem("token");
+            setToken(tokenFromStorage);
+        };
+        window.addEventListener("storage", handleStorageChange);
+
+
+        return () => window.removeEventListener("storage", handleStorageChange);
+    }, [token]); // Депенденси добавляем для отслеживания изменения токена
+
     return (
         <nav style={styles.nav}>
             <Link to="/" style={styles.link}>Главная</Link>
             <Link to="/profile" style={styles.link}>Профиль</Link>
+            {token ? <LogoutButton /> : <GoogleLoginButton />}
         </nav>
     );
 };
