@@ -1,10 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import pokemonStore from "../stores/PokemonStore";
 
 const LogoutButton = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
+        pokemonStore.setAuthenticated(false); // Обновляем статус
         localStorage.removeItem("token");
         navigate("/");
     };

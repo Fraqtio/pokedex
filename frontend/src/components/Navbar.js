@@ -1,31 +1,19 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import LogoutButton from "./LogoutButton";
 import GoogleLoginButton from "./GoogleLoginButton";
+import { observer } from "mobx-react-lite";
+import pokemonStore from "../stores/PokemonStore";
 
-const Navbar = () => {
-
-    const [token, setToken] = useState(localStorage.getItem("token"));
-
-    useEffect(() => {
-        const handleStorageChange = () => {
-            const tokenFromStorage = localStorage.getItem("token");
-            setToken(tokenFromStorage);
-        };
-        window.addEventListener("storage", handleStorageChange);
-
-
-        return () => window.removeEventListener("storage", handleStorageChange);
-    }, [token]); // Депенденси добавляем для отслеживания изменения токена
-
+const Navbar = observer(() => {
     return (
         <nav style={styles.nav}>
             <Link to="/" style={styles.link}>Main</Link>
             <Link to="/profile" style={styles.link}>Profile</Link>
-            {token ? <LogoutButton /> : <GoogleLoginButton />}
+            {pokemonStore.authenticated ? <LogoutButton /> : <GoogleLoginButton />}
         </nav>
     );
-};
+});
 
 const styles = {
     nav: {

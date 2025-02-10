@@ -14,6 +14,7 @@ const Login = () => {
 
             if (token) {
                 localStorage.setItem("token", token);
+                pokemonStore.setAuthenticated(true); // Обновляем статус
                 await pokemonStore.fetchUserFavorites(); // Дождаться загрузки избранных покемонов
                 navigate("/profile", { replace: true });
             } else {

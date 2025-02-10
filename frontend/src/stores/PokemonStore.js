@@ -18,10 +18,16 @@ class PokemonStore {
     searchQuery = "";  // Строка поиска
     isFullDataLoaded = false;   // Флаг, указывающий, загружены ли все покемоны (для поиска)
     favorites = new Set();
+    authenticated = !!localStorage.getItem('token');
 
     constructor() {
         makeAutoObservable(this);
     }
+
+    // Действие для обновления статуса аутентификации
+    setAuthenticated = (isAuthenticated) => {
+        this.authenticated = isAuthenticated;
+    };
 
     // Загружает общее количество покемонов
     async fetchTotalPokemonCount() {
