@@ -9,49 +9,32 @@ import { allTypes, typeColors } from "../constants/pokeTypes";
 const FavoriteList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
 
-    // MobX будет автоматически отслеживать изменения в этих значениях
+    // Получаем примитивные значения из стора
+    const currentPage = Math.floor(pokemonStore.offset / pokemonStore.limit) + 1;
+    const totalPages = Math.max(1, Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit));
+
+    // Деструктурируем нужные примитивы
     const {
-   //     searchQuery,
+        searchQuery,
         selectedTypes,
         offset,
         limit,
-        pokemonCount,
-        fetchFavoritePokemons,
-        setOffset,
-        setLimit,
-        updateSearchQueryProfile,
-        toggleFavoriteTypeFilter,
-        pokemons
+        pokemonCount
     } = pokemonStore;
 
-    // Вычисляемые значения на основе observable-полей
-    const currentPage = Math.floor(offset / limit) + 1;
-    const totalPages = Math.max(1, Math.ceil(pokemonCount / limit));
+    const serializedTypes = JSON.stringify(selectedTypes);
 
-    // MobX reaction вместо useEffect
     useEffect(() => {
-        // Автоматически отслеживаем все используемые поля внутри реакции
-        const dispose = pokemonStore.autorun(() => {
-            fetchFavoritePokemons();
-        });
-
-        // Очистка при размонтировании
-        return () => dispose();
-    }, []);
-
-    // Обработчики изменений
-    const handlePageChange = (page) => {
-        const newOffset = (page - 1) * limit;
-        setOffset(newOffset);
-    };
-
-    const handleLimitChange = (newLimit) => {
-        setLimit(newLimit);
-    };
-
-    const handleSearch = debounce((query) => {
-        updateSearchQueryProfile(query);
-    }, 300);
+        pokemonStore.fetchFavoritePokemons();
+        // Используем только примитивные зависимости
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        searchQuery,
+        serializedTypes, // Сериализуем массив для сравнения
+        offset,
+        limit,
+        pokemonCount
+    ]);
 
     return (
         <div>
@@ -71,14 +54,21 @@ const FavoriteList = observer(() => {
                 <div style={{ display: "flex", justifyContent: "center", flex: "1" }}>
                     <Pagination
                         currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPrev={pokemonStore.goToPrevPage}
-                        onNext={pokemonStore.goToNextPage}
-                        onPageChange={handlePageChange}
-                        onLimitChange={handleLimitChange}
-                        isPrevDisabled={offset === 0}
-                        isNextDisabled={offset + limit >= pokemonCount}
-                        currentLimit={limit}
+                        totalPages={totalPages} // Используем pokemonStore.pokemonCount
+                        onPrev={() => pokemonStore.goToPrevPage()}
+                        onNext={() => pokemonStore.goToNextPage()}
+                        onPageChange={(page) => {
+                            const newOffset = (page - 1) * pokemonStore.limit;
+                            pokemonStore.setOffset(newOffset);
+                            pokemonStore.fetchFavoritePokemons();
+                        }}
+                        onLimitChange={(newLimit) => {
+                            pokemonStore.setLimit(newLimit);
+                            pokemonStore.fetchFavoritePokemons();
+                        }}
+                        isPrevDisabled={pokemonStore.offset === 0}
+                        isNextDisabled={pokemonStore.offset + pokemonStore.limit >= pokemonStore.pokemonCount}
+                        currentLimit={pokemonStore.limit}
                     />
                 </div>
 
@@ -90,7 +80,8 @@ const FavoriteList = observer(() => {
                     onChange={(e) => {
                         const query = e.target.value.toLowerCase();
                         setSearchTerm(query);
-                        handleSearch(query);
+                        const debounced = debounce(() => pokemonStore.updateSearchQueryProfile(query), 300);
+                        debounced();
                     }}
                     style={{
                         padding: "8px",
@@ -106,29 +97,29 @@ const FavoriteList = observer(() => {
                 {allTypes.map((type) => (
                     <button
                         key={type}
-                        onClick={() => toggleFavoriteTypeFilter(type)}
+                        onClick={() => pokemonStore.toggleFavoriteTypeFilter(type)}
                         style={{
                             padding: "8px 12px",
                             border: `2px solid ${typeColors[type]}`,
-                            backgroundColor: selectedTypes.includes(type) ? typeColors[type] : "transparent",
-                            color: selectedTypes.includes(type) ? "#fff" : typeColors[type],
+                            backgroundColor: pokemonStore.selectedTypes.includes(type) ? typeColors[type] : "transparent",
+                            color: pokemonStore.selectedTypes.includes(type) ? "#fff" : typeColors[type],
                             cursor: "pointer",
                             borderRadius: "20px",
                             textTransform: "capitalize",
                             transition: "all 0.2s ease",
-                            fontWeight: selectedTypes.includes(type) ? "bold" : "normal",
+                            fontWeight: pokemonStore.selectedTypes.includes(type) ? "bold" : "normal",
                         }}
                     >
                         {type}
                     </button>
                 ))}
                 <button
-                    onClick={() => toggleFavoriteTypeFilter(null)}
+                    onClick={() => pokemonStore.toggleFavoriteTypeFilter(null)}
                     style={{
                         padding: "8px 12px",
                         border: "1px solid #ddd",
-                        backgroundColor: selectedTypes === null ? "#007bff" : "#fff",
-                        color: selectedTypes === null ? "#fff" : "#000",
+                        backgroundColor: pokemonStore.selectedTypes === null ? "#007bff" : "#fff",
+                        color: pokemonStore.selectedTypes === null ? "#fff" : "#000",
                         cursor: "pointer",
                         borderRadius: "5px",
                     }}
@@ -139,8 +130,8 @@ const FavoriteList = observer(() => {
 
             {/* Список избранных покемонов */}
             <div style={{ display: "grid", gap: "20px", justifyContent: "center", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))" }}>
-                {pokemons.length > 0 ? (
-                    pokemons.map((pokemon) => (
+                {pokemonStore.pokemons.length > 0 ? (
+                    pokemonStore.pokemons.map((pokemon) => (
                         <PokemonCard key={pokemon.name} {...pokemon} />
                     ))
                 ) : (
