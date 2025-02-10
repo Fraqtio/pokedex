@@ -10,13 +10,17 @@ const PokemonList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
     const [totalPages, setTotalPages] = useState(1);
 
-    const { limit, pokemonCount, offset} = pokemonStore;
-
+    // Получаем примитивные значения из стора
+    const { limit, pokemonCount, offset, selectedTypes  } = pokemonStore;
     const currentPage = Math.floor(offset / limit) + 1;
+    const serializedTypes = JSON.stringify(selectedTypes);
 
+    useEffect(() => {
+        pokemonStore.fetchPokemonList();
+        // Используем только примитивные зависимости
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [limit, pokemonCount, serializedTypes]);
 
-
-    // Обновляем totalPages, когда изменяется количество покемонов
     useEffect(() => {
         setTotalPages(Math.max(1, Math.ceil(pokemonCount / limit)));
     }, [pokemonCount, limit]);

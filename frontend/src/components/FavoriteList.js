@@ -9,18 +9,32 @@ import { allTypes, typeColors } from "../constants/pokeTypes";
 const FavoriteList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
 
+    // Получаем примитивные значения из стора
     const currentPage = Math.floor(pokemonStore.offset / pokemonStore.limit) + 1;
-    const totalPages = Math.max(1, Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit)); // Обновленный totalPages
+    const totalPages = Math.max(1, Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit));
 
-    const { searchQuery, selectedTypes, offset, limit, pokemonCount } = pokemonStore;
-    // 🔥 Загружаем избранных покемонов при изменении фильтров
+    // Деструктурируем нужные примитивы
+    const {
+        searchQuery,
+        selectedTypes,
+        offset,
+        limit,
+        pokemonCount
+    } = pokemonStore;
+
+    const serializedTypes = JSON.stringify(selectedTypes);
+
     useEffect(() => {
         pokemonStore.fetchFavoritePokemons();
-    }, [searchQuery,
-            selectedTypes,
-            offset,
-            limit,
-            pokemonCount]);
+        // Используем только примитивные зависимости
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        searchQuery,
+        serializedTypes, // Сериализуем массив для сравнения
+        offset,
+        limit,
+        pokemonCount
+    ]);
 
     return (
         <div>
