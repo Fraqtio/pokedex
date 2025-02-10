@@ -3,14 +3,17 @@ import axios from "axios";
 import {useLocation, useNavigate} from "react-router-dom";
 import FavoriteList from "../components/FavoriteList";
 import pokemonStore from "../stores/PokemonStore";
+import Initializer from "../components/Initializer";
 
 const Profile = () => {
     const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
     const location = useLocation();
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchUser = async () => {
+            setIsLoading(true);// Устанавливаем состояние загрузки в true перед началом запроса
             try {
                 // Проверяем наличие токена в localStorage
                 const storedToken = localStorage.getItem("token");
@@ -19,35 +22,37 @@ const Profile = () => {
                 const response = await axios.get("http://localhost:5000/user", {
                     headers: {Authorization: `Bearer ${storedToken}`},
                 });
-                await pokemonStore.fetchUserFavorites();
-                setUser(response.data);
 
+                setUser(response.data);
+                pokemonStore.clearPokemons();
+                await pokemonStore.fetchUserFavorites();
             } catch (err) {
                 console.error("Ошибка загрузки данных:", err);
                 localStorage.removeItem("token");
                 // navigate("/");
             }
+            setIsLoading(false); // Устанавливаем состояние загрузки в false после завершения запроса
         };
 
     fetchUser();
 
     }, [location.search, navigate]);
 
-    useEffect(() => {
-        // Загружаем избранных покемонов при каждом обновлении страницы
-        pokemonStore.fetchUserFavorites();
-    }, []);
+    if (isLoading) {
+        return <div>Loading...</div>; // Отображаем индикатор загрузки
+    }
 
     if (!user) {
-        return <div>Загрузка...</div>;
+        return <div>User data load error.</div>;
     }
 
     return (
         <div>
-            <h1>Профиль</h1>
-            <p>Имя: {user.name}</p>
+            <Initializer />
+            <h1>Profile</h1>
+            <p>Name: {user.name}</p>
             <p>Email: {user.email}</p>
-            <h2>Избранные покемоны</h2>
+            <h2>Favorite Pokemons</h2>
             <FavoriteList />
         </div>
     );

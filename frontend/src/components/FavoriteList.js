@@ -15,7 +15,11 @@ const FavoriteList = observer(() => {
     // 🔥 Загружаем избранных покемонов при изменении фильтров
     useEffect(() => {
         pokemonStore.fetchFavoritePokemons();
-    }, [pokemonStore.searchQuery, pokemonStore.selectedTypes, pokemonStore.offset, pokemonStore.limit]);
+    }, [pokemonStore.searchQuery,
+            pokemonStore.selectedTypes,
+            pokemonStore.offset,
+            pokemonStore.limit,
+            pokemonStore.pokemonCount]);
 
     return (
         <div>
@@ -40,12 +44,11 @@ const FavoriteList = observer(() => {
                         onNext={() => pokemonStore.goToNextPage()}
                         onPageChange={(page) => {
                             const newOffset = (page - 1) * pokemonStore.limit;
-                            pokemonStore.offset = newOffset;
+                            pokemonStore.setOffset(newOffset);
                             pokemonStore.fetchFavoritePokemons();
                         }}
                         onLimitChange={(newLimit) => {
                             pokemonStore.setLimit(newLimit);
-                            pokemonStore.offset = 0;
                             pokemonStore.fetchFavoritePokemons();
                         }}
                         isPrevDisabled={pokemonStore.offset === 0}
@@ -117,7 +120,7 @@ const FavoriteList = observer(() => {
                         <PokemonCard key={pokemon.name} {...pokemon} />
                     ))
                 ) : (
-                    <p>No favorite pokemons yet...</p>
+                    <p>There is nothing in here...</p>
                 )}
             </div>
         </div>

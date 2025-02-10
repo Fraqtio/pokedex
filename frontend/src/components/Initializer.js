@@ -1,7 +1,10 @@
 import { useEffect } from "react";
-import pokemonStore from "../stores/PokemonStore"; // Импортируем PokemonStore
+import pokemonStore from "../stores/PokemonStore";
+import {useLocation} from "react-router-dom"; // Импортируем PokemonStore
 
 const PokemonInitializer = () => {
+    const location = useLocation();
+
     useEffect(() => {
         let isMounted = true; // Флаг, чтобы отслеживать монтирование компонента
 
@@ -9,19 +12,19 @@ const PokemonInitializer = () => {
             if (!isMounted) return; // Если компонент размонтирован, не выполняем дальнейшие действия
 
             try {
-                // 1. Загружаем общее количество покемонов
+                // Загружаем общее количество покемонов
                 await pokemonStore.fetchTotalPokemonCount();
 
-                // 2. Загружаем полный список для поиска
-                await pokemonStore.fetchAllPokemonData();
-
-                // 3. Загружаем данные по типам
+                // Загружаем данные по типам
                 await pokemonStore.fetchPokemonByType();
 
-                // 4. Загружаем первую страницу покемонов
-                await pokemonStore.fetchPokemonList();
+                await pokemonStore.fetchAllPokemonData();
+                // Если мы не на странице профиля, загружаем полный список покемонов
+                if (!location.pathname.includes("/profile")) {
+                    await pokemonStore.fetchPokemonList();
+                }
 
-                // 5. Загружаем любимых покемонов, если есть токен
+                // Загружаем избранных покемонов, если есть токен
                 if (localStorage.getItem("token")) {
                     await pokemonStore.fetchUserFavorites();
                 }
@@ -30,7 +33,7 @@ const PokemonInitializer = () => {
                 console.error("Ошибка инициализации:", err);
             }
         };
-
+        console.log("initialize");
         initialize();
 
         // Убираем флаг при размонтировании компонента
@@ -38,7 +41,7 @@ const PokemonInitializer = () => {
             isMounted = false;
         };
 
-    }, []); // Пустой массив зависимостей, чтобы запускался только один раз при монтировании компонента
+    }, [location.pathname]); // Пустой массив зависимостей, чтобы запускался только один раз при монтировании компонента
 
     return null; // Не отображаем ничего, это только для инициализации
 };

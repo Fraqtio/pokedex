@@ -7,7 +7,7 @@ const GoogleLoginButton = () => {
 
     return (
         <button onClick={handleGoogleLogin} style={styles.button}>
-            Войти через Google
+            Login via Google
         </button>
     );
 };

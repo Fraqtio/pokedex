@@ -41,12 +41,11 @@ const PokemonList = observer(() => {
                         onNext={() => pokemonStore.goToNextPage()}
                         onPageChange={(page) => {
                             const newOffset = (page - 1) * pokemonStore.limit;
-                            pokemonStore.offset = newOffset;
+                            pokemonStore.setOffset(newOffset);
                             pokemonStore.fetchPokemonList();
                         }}
                         onLimitChange={(newLimit) => {
                             pokemonStore.setLimit(newLimit);
-                            pokemonStore.offset = 0;
                             pokemonStore.fetchPokemonList();
                         }}
                         isPrevDisabled={pokemonStore.offset === 0}

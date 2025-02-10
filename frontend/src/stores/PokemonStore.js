@@ -195,6 +195,10 @@ class PokemonStore {
     async fetchFavoritePokemons() {
         runInAction(() => { this.isLoading = true; });
         try {
+            if (this.allPokemons.length === 0) {
+                await this.fetchAllPokemonData(); // Догружаем при необходимости
+            }
+
             // 1️⃣ Получаем объекты покемонов из `allPokemons`, используя `this.favorites`
             let filteredFavorites = this.allPokemons.filter(pokemon =>
                 this.favorites.has(pokemon.name)
@@ -257,6 +261,12 @@ class PokemonStore {
         }
     }
 
+    clearPokemons() {
+        runInAction(() => {
+            this.pokemons = [];
+        });
+    }
+
     // Обрабатывает данные о покемоне, извлекая нужные параметры
     mapPokemonDetails(data) {
         return {
@@ -294,6 +304,12 @@ class PokemonStore {
         runInAction(() => {
             this.limit = newLimit;
             this.offset = 0;  // если меняется лимит, сбрасываем offset
+        });
+    }
+
+    setOffset(newOffset) {
+        runInAction(() => {
+            this.offset = newOffset;
         });
     }
 
@@ -335,7 +351,7 @@ class PokemonStore {
             this.selectedTypes = [this.selectedTypes[1], type];
         }
 
-        this.fetchUserFavorites(); // Загружаем избранных покемонов с новым фильтром
+        this.fetchFavoritePokemons(); // Загружаем избранных покемонов с новым фильтром
     }
 
     // Переход на следующую страницу

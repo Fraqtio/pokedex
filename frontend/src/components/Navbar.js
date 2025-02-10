@@ -20,8 +20,8 @@ const Navbar = () => {
 
     return (
         <nav style={styles.nav}>
-            <Link to="/" style={styles.link}>Главная</Link>
-            <Link to="/profile" style={styles.link}>Профиль</Link>
+            <Link to="/" style={styles.link}>Main</Link>
+            <Link to="/profile" style={styles.link}>Profile</Link>
             {token ? <LogoutButton /> : <GoogleLoginButton />}
         </nav>
     );
