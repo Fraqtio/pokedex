@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import pokemonStore from "../stores/PokemonStore";
-import {runInAction} from "mobx";
 
 const Login = () => {
     const location = useLocation();

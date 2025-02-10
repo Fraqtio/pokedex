@@ -29,6 +29,13 @@ class PokemonStore {
         this.authenticated = isAuthenticated;
     };
 
+    checkAuth = () => {
+        const token = localStorage.getItem('token');
+        runInAction(() => {
+            this.isAuthenticated = !!token;
+        });
+    };
+
     // Загружает общее количество покемонов
     async fetchTotalPokemonCount() {
         const maxCount = await getPokemonMaxCount();
@@ -83,23 +90,22 @@ class PokemonStore {
     }
 
     async fetchUserFavorites() {
-        try {
-            const response = await fetch('http://localhost:5000/favorites', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+        const response = await fetch('http://localhost:5000/favorites', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
 
-            if (!response.ok) {
-                throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            runInAction(() => {
-                this.favorites.clear();  // Очищаем старое содержимое
-                data.forEach(pokemon => this.favorites.add(pokemon));  // Добавляем новые элементы
-            });
-        } catch (error) {
-            console.error("Ошибка загрузки избранных покемонов:", error);
+        // Проверяем, был ли запрос успешным
+        if (!response.ok) {
+            console.error(`Ошибка ${response.status}: ${response.statusText}`);
+            return; // Прекращаем выполнение функции
         }
+
+        // Если запрос успешен, обрабатываем данные
+        const data = await response.json();
+        runInAction(() => {
+            this.favorites.clear();  // Очищаем старое содержимое
+            data.forEach(pokemon => this.favorites.add(pokemon));  // Добавляем новые элементы
+        });
     }
 
     async toggleFavorite(pokemonName) {

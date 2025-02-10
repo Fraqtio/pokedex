@@ -15,6 +15,7 @@ const PokemonInitializer = () => {
                 // Загружаем общее количество покемонов
                 await pokemonStore.fetchTotalPokemonCount();
 
+                await pokemonStore.checkAuth();
                 // Загружаем данные по типам
                 await pokemonStore.fetchPokemonByType();
 
