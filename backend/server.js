@@ -13,7 +13,10 @@ const favoritesRouter = require("./routes/favorites");
 
 const app = express();
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: [
+        process.env.FRONTEND_URL, // Для продакшена
+        "http://localhost:3000" // Для локальной разработки
+    ],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
 }))
@@ -28,5 +31,5 @@ app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 app.use("/favorites", favoritesRouter);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.VERCEL ? 0 : process.env.PORT || 5000; // Для совместимости с Vercel
 app.listen(PORT, () => console.log(`Сервер запущен на ${PORT}`));

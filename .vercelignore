@@ -1,0 +1,14 @@
+# Игнорируем всё, кроме фронтенда и бэкенда
+*
+!frontend/**
+!backend/**
+
+# Исключения внутри фронтенда
+frontend/node_modules
+frontend/.env.local
+frontend/.git
+
+# Исключения внутри бэкенда
+backend/node_modules
+backend/.env
+backend/tests/
