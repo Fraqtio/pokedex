@@ -9,13 +9,16 @@ import { allTypes, typeColors } from "../constants/pokeTypes";
 const PokemonList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
     const [totalPages, setTotalPages] = useState(1);
-    const currentPage = Math.floor(pokemonStore.offset / pokemonStore.limit) + 1;
+
+    const { limit, pokemonCount, offset} = pokemonStore;
+
+    const currentPage = Math.floor(offset / limit) + 1;
 
 
-    const { limit, pokemonCount } = pokemonStore;
+
     // Обновляем totalPages, когда изменяется количество покемонов
     useEffect(() => {
-        setTotalPages(Math.max(1, Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit)));
+        setTotalPages(Math.max(1, Math.ceil(pokemonCount / limit)));
     }, [pokemonCount, limit]);
 
     return (
@@ -48,9 +51,9 @@ const PokemonList = observer(() => {
                             pokemonStore.setLimit(newLimit);
                             pokemonStore.fetchPokemonList();
                         }}
-                        isPrevDisabled={pokemonStore.offset === 0}
-                        isNextDisabled={pokemonStore.offset + pokemonStore.limit >= pokemonStore.pokemonCount}
-                        currentLimit={pokemonStore.limit}
+                        isPrevDisabled={offset === 0}
+                        isNextDisabled={offset + limit >= pokemonCount}
+                        currentLimit={limit}
                     />
                 </div>
 
