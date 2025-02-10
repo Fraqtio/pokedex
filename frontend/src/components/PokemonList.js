@@ -12,11 +12,11 @@ const PokemonList = observer(() => {
     const currentPage = Math.floor(pokemonStore.offset / pokemonStore.limit) + 1;
 
 
-
+    const { limit, pokemonCount } = pokemonStore;
     // Обновляем totalPages, когда изменяется количество покемонов
     useEffect(() => {
         setTotalPages(Math.max(1, Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit)));
-    }, [pokemonStore.pokemonCount, pokemonStore.limit]);
+    }, [pokemonCount, limit]);
 
     return (
         <div>

@@ -12,14 +12,15 @@ const FavoriteList = observer(() => {
     const currentPage = Math.floor(pokemonStore.offset / pokemonStore.limit) + 1;
     const totalPages = Math.max(1, Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit)); // Обновленный totalPages
 
+    const { searchQuery, selectedTypes, offset, limit, pokemonCount } = pokemonStore;
     // 🔥 Загружаем избранных покемонов при изменении фильтров
     useEffect(() => {
         pokemonStore.fetchFavoritePokemons();
-    }, [pokemonStore.searchQuery,
-            pokemonStore.selectedTypes,
-            pokemonStore.offset,
-            pokemonStore.limit,
-            pokemonStore.pokemonCount]);
+    }, [searchQuery,
+            selectedTypes,
+            offset,
+            limit,
+            pokemonCount]);
 
     return (
         <div>
