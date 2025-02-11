@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useEffect, useState } from "react";
+import {useEffect, useMemo, useState} from "react";
 import pokemonStore from "../stores/PokemonStore";
 import PokemonCard from "./PokemonCard";
 import Pagination from "./Pagination";
@@ -8,15 +8,34 @@ import { allTypes, typeColors } from "../constants/pokeTypes";
 
 const PokemonList = observer(() => {
     const [searchTerm, setSearchTerm] = useState("");
-    const [totalPages, setTotalPages] = useState(1);
-    const currentPage = Math.floor(pokemonStore.offset / pokemonStore.limit) + 1;
 
+    const {
+        pokemonCount,
+        limit,
+        offset,
+        selectedTypes,
+        pokemons
+    } = pokemonStore;
 
+    const currentPage = useMemo(() =>
+            Math.floor(offset / limit) + 1,
+        [offset, limit]
+    );
 
-    // Обновляем totalPages, когда изменяется количество покемонов
+    const totalPages = useMemo(() =>
+            Math.max(1, Math.ceil(pokemonCount / limit)),
+        [pokemonCount, limit]
+    );
+
     useEffect(() => {
-        setTotalPages(Math.max(1, Math.ceil(pokemonStore.pokemonCount / pokemonStore.limit)));
-    }, [pokemonStore.pokemonCount, pokemonStore.limit]);
+        const debouncedSearch = debounce(() => {
+            pokemonStore.updateSearchQuery(searchTerm.toLowerCase());
+        }, 150);
+
+        debouncedSearch();
+
+        return () => debouncedSearch.cancel();
+    }, [searchTerm]);
 
     return (
         <div>
@@ -40,7 +59,7 @@ const PokemonList = observer(() => {
                         onPrev={() => pokemonStore.goToPrevPage()}
                         onNext={() => pokemonStore.goToNextPage()}
                         onPageChange={(page) => {
-                            const newOffset = (page - 1) * pokemonStore.limit;
+                            const newOffset = (page - 1) * limit;
                             pokemonStore.setOffset(newOffset);
                             pokemonStore.fetchPokemonList();
                         }}
@@ -48,9 +67,9 @@ const PokemonList = observer(() => {
                             pokemonStore.setLimit(newLimit);
                             pokemonStore.fetchPokemonList();
                         }}
-                        isPrevDisabled={pokemonStore.offset === 0}
-                        isNextDisabled={pokemonStore.offset + pokemonStore.limit >= pokemonStore.pokemonCount}
-                        currentLimit={pokemonStore.limit}
+                        isPrevDisabled={offset === 0}
+                        isNextDisabled={offset + limit >= pokemonCount}
+                        currentLimit={limit}
                     />
                 </div>
 
@@ -83,13 +102,13 @@ const PokemonList = observer(() => {
                         style={{
                             padding: "8px 12px",
                             border: `2px solid ${typeColors[type]}`,
-                            backgroundColor: pokemonStore.selectedTypes.includes(type) ? typeColors[type] : "transparent",
-                            color: pokemonStore.selectedTypes.includes(type) ? "#fff" : typeColors[type],
+                            backgroundColor: selectedTypes.includes(type) ? typeColors[type] : "transparent",
+                            color: selectedTypes.includes(type) ? "#fff" : typeColors[type],
                             cursor: "pointer",
                             borderRadius: "20px",
                             textTransform: "capitalize",
                             transition: "all 0.2s ease",
-                            fontWeight: pokemonStore.selectedTypes.includes(type) ? "bold" : "normal",
+                            fontWeight: selectedTypes.includes(type) ? "bold" : "normal",
                         }}
                     >
                         {type}
@@ -100,8 +119,8 @@ const PokemonList = observer(() => {
                     style={{
                         padding: "8px 12px",
                         border: "1px solid #ddd",
-                        backgroundColor: pokemonStore.selectedTypes === null ? "#007bff" : "#fff",
-                        color: pokemonStore.selectedTypes === null ? "#fff" : "#000",
+                        backgroundColor: selectedTypes === null ? "#007bff" : "#fff",
+                        color: selectedTypes === null ? "#fff" : "#000",
                         cursor: "pointer",
                         borderRadius: "5px",
                     }}
@@ -112,12 +131,12 @@ const PokemonList = observer(() => {
 
             {/* Список покемонов */}
             <div style={{ display: "grid", gap: "20px", justifyContent: "center", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))" }}>
-                {pokemonStore.pokemons.length > 0 ? (
-                    pokemonStore.pokemons.map((pokemon) => (
+                {pokemons.length > 0 ? (
+                    pokemons.map((pokemon) => (
                         <PokemonCard key={pokemon.name} {...pokemon} />
                     ))
                 ) : (
-                    <p>Загрузка покемонов...</p>
+                    <p>Loading pokemons...</p>
                 )}
             </div>
         </div>
