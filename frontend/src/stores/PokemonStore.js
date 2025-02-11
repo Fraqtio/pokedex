@@ -90,7 +90,7 @@ class PokemonStore {
     }
 
     async fetchUserFavorites() {
-        const response = await fetch(`${process.env.BACKEND_URL}/favorites`, {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/favorites`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
 
@@ -112,7 +112,7 @@ class PokemonStore {
         const method = this.favorites.has(pokemonName) ? "DELETE" : "POST";
 
         try {
-            const response = await fetch(`${process.env.BACKEND_URL}/favorites/${pokemonName}`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/favorites/${pokemonName}`, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
