@@ -29,4 +29,4 @@ app.use('/user', userRoutes);
 app.use("/favorites", favoritesRouter);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Сервер запущен на ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
