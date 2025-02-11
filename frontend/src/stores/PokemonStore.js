@@ -58,7 +58,7 @@ class PokemonStore {
             });
 
         } catch (error) {
-            console.error("Ошибка загрузки полного списка:", error);
+            console.error("Full list loading error:", error);
         }
     }
 
@@ -70,7 +70,7 @@ class PokemonStore {
 
                 // Проверяем корректность данных
                 if (!Array.isArray(responseData)) {
-                    console.error(`Некорректный формат данных для типа ${typeName}:`, responseData);
+                    console.error(`Incorrect data format for type ${typeName}:`, responseData);
                     continue;
                 }
 
@@ -84,19 +84,19 @@ class PokemonStore {
                 this.pokemonByType.set(typeName, pokemonList);
 
             } catch (error) {
-                console.error(`Ошибка загрузки для типа ${typeName}:`, error);
+                console.error(`Loading error for type ${typeName}:`, error);
             }
         }
     }
 
     async fetchUserFavorites() {
-        const response = await fetch('http://localhost:5000/favorites', {
+        const response = await fetch(`${process.env.BACKEND_URL}/favorites`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
 
         // Проверяем, был ли запрос успешным
         if (!response.ok) {
-            console.error(`Ошибка ${response.status}: ${response.statusText}`);
+            console.error(`Error ${response.status}: ${response.statusText}`);
             return; // Прекращаем выполнение функции
         }
 
@@ -112,7 +112,7 @@ class PokemonStore {
         const method = this.favorites.has(pokemonName) ? "DELETE" : "POST";
 
         try {
-            const response = await fetch(`http://localhost:5000/favorites/${pokemonName}`, {
+            const response = await fetch(`${process.env.BACKEND_URL}/favorites/${pokemonName}`, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
@@ -129,10 +129,10 @@ class PokemonStore {
                     }
                 });
             } else {
-                console.error("Ошибка при изменении избранного");
+                console.error("Favorite changing error");
             }
         } catch (error) {
-            console.error("Ошибка сети:", error);
+            console.error("Net error:", error);
         }
     }
 

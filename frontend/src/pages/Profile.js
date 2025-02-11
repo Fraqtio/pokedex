@@ -19,7 +19,7 @@ const Profile = () => {
                 const storedToken = localStorage.getItem("token");
 
                 // Запрашиваем данные о пользователе
-                const response = await axios.get("http://localhost:5000/user", {
+                const response = await axios.get(`${process.env.BACKEND_URL}/user`, {
                     headers: {Authorization: `Bearer ${storedToken}`},
                 });
 
@@ -27,7 +27,7 @@ const Profile = () => {
                 pokemonStore.clearPokemons();
                 await pokemonStore.fetchUserFavorites();
             } catch (err) {
-                console.error("Ошибка загрузки данных:", err);
+                console.error("Data loading error:", err);
                 localStorage.removeItem("token");
                 // navigate("/");
             }
