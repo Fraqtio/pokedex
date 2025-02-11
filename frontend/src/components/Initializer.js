@@ -31,10 +31,9 @@ const PokemonInitializer = () => {
                 }
 
             } catch (err) {
-                console.error("Ошибка инициализации:", err);
+                console.error("Init error:", err);
             }
         };
-        console.log("initialize");
         initialize();
 
         // Убираем флаг при размонтировании компонента

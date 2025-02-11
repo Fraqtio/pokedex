@@ -8,7 +8,7 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 
 router.get('/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
     const token = jwt.sign({ id: req.user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.redirect(`http://localhost:3000/login?token=${token}`); // Редирект на фронт
+    res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}`); // Редирект на фронт
 });
 
 module.exports = router;

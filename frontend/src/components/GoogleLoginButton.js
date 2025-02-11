@@ -2,7 +2,7 @@ import React from "react";
 
 const GoogleLoginButton = () => {
     const handleGoogleLogin = () => {
-        window.open("http://localhost:5000/auth/google", "_blank");
+        window.open(`${process.env.BACKEND_URL}/auth/google`, "_blank");
     };
 
     return (

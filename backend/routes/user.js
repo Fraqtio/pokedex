@@ -8,11 +8,11 @@ router.get("/", authMiddleware, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) {
-            return res.status(404).json({ error: "Пользователь не найден" });
+            return res.status(404).json({ error: "User not found" });
         }
         res.json(user); // Теперь отправляем ВСЕ данные пользователя
     } catch (err) {
-        res.status(500).json({ error: "Ошибка сервера" });
+        res.status(500).json({ error: "Server error" });
     }
 });
 
@@ -34,7 +34,7 @@ router.post("/favorites", authMiddleware, async (req, res) => {
 
         res.json(user.favorites);
     } catch (err) {
-        res.status(500).json({ error: "Ошибка сервера" });
+        res.status(500).json({ error: "Server error" });
     }
 });
 
@@ -45,7 +45,7 @@ router.delete("/favorites/:pokemonName", authMiddleware, async (req, res) => {
         await user.save();
         res.json(user.favorites);
     } catch (err) {
-        res.status(500).json({ error: "Ошибка сервера" });
+        res.status(500).json({ error: "Server error" });
     }
 });
 

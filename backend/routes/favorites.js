@@ -13,7 +13,7 @@ router.post("/:pokemonName", auth, async (req, res) => {
         }
         res.json(user.favorites);
     } catch (err) {
-        res.status(500).json({ error: "Ошибка сервера" });
+        res.status(500).json({ error: "Server error" });
     }
 });
 
@@ -25,7 +25,7 @@ router.delete("/:pokemonName", auth, async (req, res) => {
         await user.save();
         res.json(user.favorites);
     } catch (err) {
-        res.status(500).json({ error: "Ошибка сервера" });
+        res.status(500).json({ error: "Server error" });
     }
 });
 
@@ -34,12 +34,11 @@ router.get("/", auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) {
-            return res.status(404).json({ error: "Пользователь не найден" });
+            return res.status(404).json({ error: "User not found" });
         }
         res.json(user.favorites);
     } catch (err) {
-        console.error("Ошибка сервера:", err);
-        res.status(500).json({ error: "Ошибка сервера" });
+        res.status(500).json({ error: "Server error" });
     }
 });
 
